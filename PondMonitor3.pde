@@ -1630,30 +1630,30 @@ void GetSysTime(void* context)
 		String tmpTime,strSnip;
 		int	tmVal;
 		strSnip= String(SysTm.Hour);	// hr to String
-		Serial.print("hour="); Serial.print(strSnip);
+		//Serial.print("hour="); Serial.print(strSnip);
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//hr needs to be 2 chr
 		SysTmStr=strSnip + ":";
 		strSnip= String(SysTm.Minute);
-		Serial.print(" Min="); Serial.print(strSnip);		
+		//Serial.print(" Min="); Serial.print(strSnip);		
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//min needs to be 2 chr		
 		SysTmStr = SysTmStr + strSnip +":";	// add hrs
 		strSnip= String(SysTm.Second);
-		Serial.print(" Sec="); Serial.println(strSnip);
+		//Serial.print(" Sec="); Serial.println(strSnip);
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//sec needs to be 2 chr
 		SysTmStr = SysTmStr + strSnip;	// add sec to complete system time string in 24 hr format as hh:mm:ss
 	
 		
 		//set up string of system date as mm/dd/yyyy
 		strSnip= String(SysTm.Month);	// month to String
-		Serial.print("Month="); Serial.print(strSnip);		
+		//Serial.print("Month="); Serial.print(strSnip);		
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//month needs to be 2 chr
 		SysDateStr= strSnip + "/";
 		strSnip= String(SysTm.Day);
-		Serial.print(" day="); Serial.print(strSnip);		
+		//Serial.print(" day="); Serial.print(strSnip);		
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//day needs to be 2 chr
 		SysDateStr = SysDateStr + strSnip +"/";				
 		SysDateStr = SysDateStr + tmYearToCalendar(SysTm.Year);	// complete SysDateStr as mm/dd/yyyy
-		Serial.print(" year="); Serial.println(SysTm.Year);	
+		//erial.print(" year="); Serial.println(SysTm.Year);	
 		
 		sysDOWstr = DisplayDOW[SysTm.Wday];	//set day of week string. SysTm.Wday is int where 1=sunday
 		Serial.println ("SysTmStr=" + SysTmStr + ", SysDateStr=" + SysDateStr + ", SysDOW=" + sysDOWstr);
@@ -1709,45 +1709,36 @@ void setup()
 	//Display.DisplaySetup(false,"test menu",7,menu3); // Prepare main-UI display array and display the first line, mode is read only.
 	
 	/*
-		set the RTC with 1/1/2015
+		set the RTC with mon 9/7/2015 @ 16:15
 	*/
-	String tmpTime,tmpStr;
-	int	tmpVal;
-	Serial.print("SysDateStr=" ); Serial.print(SysDateStr); Serial.print(", sysTimeStr="); Serial.print(SysTmStr); Serial.print("' SysDOW="); Serial.println(sysDOWstr);
-	Serial.println("SysDateStr=" + SysDateStr + ", sysTimeStr=" + SysTmStr + "' SysDOW=" + sysDOWstr);
-	Display.DisplayGetSetDate (&SysDateStr, "Date", false);					// read the date string from display line named 'Date' in the SetRTC_up array
-	tmpStr= SysDateStr.substring(0,1);		//get 2 digit date
-	Serial.println("month from RTC_ui="+tmpStr);
-	SysTm.Month = tmpStr.toInt();
-	tmpStr= SysDateStr.substring((3,4));	//get 2 digit day
-	Serial.println("day from RTC_ui="+tmpStr);
-	SysTm.Day = tmpStr.toInt();
-	tmpStr= SysDateStr.substring((6,9));	//get 4 digit yr
-	Serial.println("year from RTC_ui="+tmpStr);
-	SysTm.Day = tmpStr.toInt()-1970;		//year has offset from 1970
-
-	Display.DisplayGetSetTime (&SysTmStr, "Time", true);					// read the time string from display line named 'Time'.
-	tmpStr= SysTmStr.substring(0,1);										// get	2 digit Hr
-	Serial.println("hrs from RTC_ui=" + tmpStr);
-	SysTm.Hour=tmpStr.toInt();
-	tmpStr= SysTmStr.substring(3,4);										// get 2 digit min
-	Serial.println("min from RTC_ui" + tmpStr);
-	SysTm.Minute = tmpStr.toInt();
-	SysTm.Second = 0;														// no seconds in RTC_ui
-	Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// read the day of week string from display line named 'DOW'
-
-	for (tmpVal=0; tmpVal<7; tmpVal++)
-	{
-		if (DisplayDOW[tmpVal]==sysDOWstr) break;
-	}
-	tmpVal++;		// increment because Sunday=1 and index for sunday=0
-	Serial.print	("RTC_ui DOW index="); Serial.println(tmpVal);
-	SysTm.Day=tmpVal;
-
+	
+	SysTm.Month =9;
+	SysTm.Day=7;
+	SysTm.Year=(2015-1970);
+	SysTm.Hour=16;
+	SysTm.Minute=15;
+	SysTm.Second=27;
+	SysTm.Wday=2;
+	
 	if (!RTC.write(SysTm))		//  write time to RTC, false if fails
 	{
 		ErrorLog("RTC write failed");
 	}
+		
+		Serial.print("In SetUp, Time = ");
+		Serial.print(SysTm.Hour);
+		Serial.write(':');
+		Serial.print(SysTm.Minute);
+		Serial.write(':');
+		Serial.print(SysTm.Second);
+		Serial.print(", Date (D/M/Y) = ");
+		Serial.print(SysTm.Day);
+		Serial.write('/');
+		Serial.print(SysTm.Month);
+		Serial.write('/');
+		Serial.print(tmYearToCalendar(SysTm.Year));
+		Serial.println();
+			
 
 }
 
