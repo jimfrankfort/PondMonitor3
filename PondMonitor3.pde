@@ -522,13 +522,13 @@ void DisplayClass::DisplayLineSetup(String Mline)
 	DisplayLineName= Mline.substring(0, tmp1);		// get DisplayLineName
 	tmp2=Mline.indexOf(',', tmp1+1);				// position of next comma
 	TemplateLine = Mline.substring(tmp1+1,tmp2);	// get TemplateLine
-	Serial.println("templateLine=|" + TemplateLine +"|");	
+	//Serial.println("templateLine=|" + TemplateLine +"|");	
 	tmp3=Mline.indexOf(',', tmp2+1);				// position of next comma
 	DisplayLineTitle = Mline.substring(tmp2+1,tmp3); // get DisplayLineTitle
 	DisplayLine = "                        "+ Mline.substring(tmp3+1,Mline.length());	//snip out the Display options and pre-pend with spaces
 	DisplayEndPos = DisplayLine.length();					// set the end of the Display position pointer
 	DisplayLine += "                    ";				// pad the DisplayLine with spaces at the end with Display line
-	Serial.print("DisplayLine=|"); Serial.print(DisplayLine); Serial.println("|");
+	//Serial.print("DisplayLine=|"); Serial.print(DisplayLine); Serial.println("|");
 	DisplayStartPos = DisplayAdvPastSpace(DisplayLine,0);	// find the first non-space chr
 	DisplayPos = DisplayStartPos;							// position index used for scrolling
 
@@ -1701,7 +1701,7 @@ void setup()
 	String str1="string one",str2="string two",str3="string three";
   
 	KeyPoll(true);		// Begin polling the keypad 
-	//SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm
+	SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm
 
 	Display.DisplayStartStop(true);		// indicate that menu processing will occur. Tells main loop to pass key presses to the Menu
 	//Menu.MenuSetup(1,"Menu1",5,menu1); // Prepare Menu1 and display the first MenuLine, array has 5 lines (starting at 1).  Mode of processing is a set of options.
@@ -1709,45 +1709,46 @@ void setup()
 	//Display.DisplaySetup(false,"test menu",7,menu3); // Prepare main-UI display array and display the first line, mode is read only.
 	
 	/*
-	Serial.println("setup call to parsing method");
-	tstBool= Menu.FindAndParseDisplayLine ("Date1", &tmp1, &str1, &str2, &str3); // Used by methods to get/set variables within display (menu) arrays. Find and parse the display line named MnuLineName in the current display array. Parse out the index to the display line, the template line, and the display line.
-	Serial.print("index="); Serial.print(tmp1);
-	Serial.println(" DisplayTitle=" + str1 + " templateLine=" + str2 + " displayln="  + str3);
+		set the RTC with 1/1/2015
 	*/
-	/*
-	tstBool=Display.DisplaySetTxt(&Tst, "Text1");
-	if( tstBool)
+	String tmpTime,tmpStr;
+	int	tmpVal;
+	Serial.print("SysDateStr=" ); Serial.print(SysDateStr); Serial.print(", sysTimeStr="); Serial.print(SysTmStr); Serial.print("' SysDOW="); Serial.println(sysDOWstr);
+	Serial.println("SysDateStr=" + SysDateStr + ", sysTimeStr=" + SysTmStr + "' SysDOW=" + sysDOWstr);
+	Display.DisplayGetSetDate (&SysDateStr, "Date", false);					// read the date string from display line named 'Date' in the SetRTC_up array
+	tmpStr= SysDateStr.substring(0,1);		//get 2 digit date
+	Serial.println("month from RTC_ui="+tmpStr);
+	SysTm.Month = tmpStr.toInt();
+	tmpStr= SysDateStr.substring((3,4));	//get 2 digit day
+	Serial.println("day from RTC_ui="+tmpStr);
+	SysTm.Day = tmpStr.toInt();
+	tmpStr= SysDateStr.substring((6,9));	//get 4 digit yr
+	Serial.println("year from RTC_ui="+tmpStr);
+	SysTm.Day = tmpStr.toInt()-1970;		//year has offset from 1970
+
+	Display.DisplayGetSetTime (&SysTmStr, "Time", true);					// read the time string from display line named 'Time'.
+	tmpStr= SysTmStr.substring(0,1);										// get	2 digit Hr
+	Serial.println("hrs from RTC_ui=" + tmpStr);
+	SysTm.Hour=tmpStr.toInt();
+	tmpStr= SysTmStr.substring(3,4);										// get 2 digit min
+	Serial.println("min from RTC_ui" + tmpStr);
+	SysTm.Minute = tmpStr.toInt();
+	SysTm.Second = 0;														// no seconds in RTC_ui
+	Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// read the day of week string from display line named 'DOW'
+
+	for (tmpVal=0; tmpVal<7; tmpVal++)
 	{
-		Serial.println("read value=" + Tst);	
+		if (DisplayDOW[tmpVal]==sysDOWstr) break;
 	}
-	else
+	tmpVal++;		// increment because Sunday=1 and index for sunday=0
+	Serial.print	("RTC_ui DOW index="); Serial.println(tmpVal);
+	SysTm.Day=tmpVal;
+
+	if (!RTC.write(SysTm))		//  write time to RTC, false if fails
 	{
-		Serial.println("set error");			
-	}
-	
-	//test writing value
-	Tst = "this is a test message, hello world";
-	tstBool=Display.DisplaySetTxt(&Tst, "Text1");
-	if( tstBool)
-	{
-		Serial.println("write value=" + Tst);
-	}
-	else
-	{
-		Serial.println("set error");
+		ErrorLog("RTC write failed");
 	}
 
-	// read again, should be different
-	tstBool=Display.DisplaySetTxt(&Tst, "Text1");
-	if( tstBool)
-	{
-		Serial.println("read after change=" + Tst);
-	}
-	else
-	{
-		Serial.println("set error");
-	}
-	*/
 }
 
 
@@ -1778,7 +1779,7 @@ void loop()
 			
 			if (Display.DisplayLineName=="SetUp")
 			{
-				Serial.print("DisplaySelection=|"); Serial.print(Display.DisplaySelection); Serial.println("|");
+				//Serial.print("DisplaySelection=|"); Serial.print(Display.DisplaySelection); Serial.println("|");
 				if (Display.DisplaySelection=="RTC")
 				{
 					Display.DisplaySetup(false,"SetRTC_ui",5,SetRTC_ui); // Prepare SetRTC_ui display array, display the first line, mode is read/write only.
