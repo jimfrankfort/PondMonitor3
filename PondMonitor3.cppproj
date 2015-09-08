@@ -52,6 +52,7 @@
   <avrgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
+      <Value>_VMDEBUG=1</Value>
       <Value>ARDUINO=106</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
@@ -94,6 +95,7 @@
   <avrgcccpp.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
+      <Value>_VMDEBUG=1</Value>
       <Value>ARDUINO=106</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
@@ -149,6 +151,7 @@
   <avrgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
+      <Value>_VMDEBUG=1</Value>
       <Value>ARDUINO=106</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
@@ -191,6 +194,7 @@
   <avrgcccpp.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>__AVR_ATmega2560__</Value>
+      <Value>_VMDEBUG=1</Value>
       <Value>ARDUINO=106</Value>
       <Value>ARDUINO_MAIN</Value>
       <Value>F_CPU=16000000L</Value>
@@ -237,12 +241,10 @@
     <Folder Include="Visual Micro\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Visual Micro\.PondMonitor3.vsarduino.h">
+    <Compile Include="PondMonitor3.pde">
       <SubType>compile</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="PondMonitor3.pde">
+    <Compile Include="Visual Micro\.PondMonitor3.vsarduino.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

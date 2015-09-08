@@ -1220,22 +1220,28 @@ boolean DisplayClass::FindAndParseDisplayLine (String MnuLineName, int *Idx, Str
 {
 	// Used by methods to get/set variables within display (Display) arrays. Find and parse the display line named MnuLineName in the current display array. Parse out the index to the display line, the template line, and the display line.
 	
+	
 	/*debug
 	Serial.println("MnuLineName=" + MnuLineName);
 	Serial.print(" Inputs: index=" );Serial.println(*Idx);
 	Serial.print(" DisplayTitle="); Serial.print(*DisplayTitle); Serial.print(" templateln="); Serial.print(*TemplateLn); Serial.print(" displayLn="); Serial.println(*DisplayLn);
 	*/
+	
 	int tmp1,tmp2,tmp3;
 	boolean tmpBool=false;
 	*Idx = 0;	//set index to 0 as calling routine doesn't need to
 	//find the string in the display array that has the name MnuLineName
-	for(int x=1; x<DisplayLineCnt+1; x++)
+	for(int x=1; x<DisplayLineCnt+1; x++)	//DisplayLineCnt is protected within Display object and is the number of lines in the dispaly array
 	{
 		//Serial.println(x);
 		if(DisplayPntr[*Idx].startsWith(MnuLineName))
 		{
 			tmpBool = true;	// found string
 			break;
+		}
+		else
+		{
+			(*Idx)++;	//increment the index
 		}
 	}
 	if (!tmpBool) return false;	//// error, didn't find the MnuLineName.  Probably a typo in coding
@@ -1306,8 +1312,8 @@ boolean DisplayClass::DisplayGetSetTime (String *TimeStr, String MnuLineName, bo
 	if (set)
 	{
 		//user wants to set the time
-		//Serial.print("old displayline="); Serial.println(DisplayLine);	//debug
-		//Serial.println(Index);	//debug
+		Serial.print("old displayline="); Serial.println(DisplayLine);	//debug
+		Serial.println(Index);	//debug
 		DisplayLine=DisplayLine.substring(0,tmp1) + *TimeStr + DisplayLine.substring(tmp1+LenOfTime,DisplayLine.length());	//splice new time into display line.  works because the chr position in the template matches the those in the display line
 		//change the entry	
 		DisplayPntr[Index]= MnuLineName +',' + TemplateLine +',' + DisplayTitle +',' + DisplayLine;	// change the entry in the display array
@@ -1316,7 +1322,7 @@ boolean DisplayClass::DisplayGetSetTime (String *TimeStr, String MnuLineName, bo
 	else
 	{
 		*TimeStr = DisplayLine.substring(tmp1,tmp1+LenOfTime);
-		//Serial.println("time string='" + *TimeStr +"'");	//debug
+		Serial.println("time string='" + *TimeStr +"'");	//debug
 		
 	}
 
@@ -1653,10 +1659,10 @@ void GetSysTime(void* context)
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//day needs to be 2 chr
 		SysDateStr = SysDateStr + strSnip +"/";				
 		SysDateStr = SysDateStr + tmYearToCalendar(SysTm.Year);	// complete SysDateStr as mm/dd/yyyy
-		//erial.print(" year="); Serial.println(SysTm.Year);	
+		//Serial.print(" year="); Serial.println(SysTm.Year);	
 		
 		sysDOWstr = DisplayDOW[SysTm.Wday];	//set day of week string. SysTm.Wday is int where 1=sunday
-		Serial.println ("SysTmStr=" + SysTmStr + ", SysDateStr=" + SysDateStr + ", SysDOW=" + sysDOWstr);
+		//Serial.println ("SysTmStr=" + SysTmStr + ", SysDateStr=" + SysDateStr + ", SysDOW=" + sysDOWstr);
 		/*
 		Serial.print("Ok, Time = ");
 		Serial.print(SysTm.Hour);
@@ -1709,7 +1715,7 @@ void setup()
 	//Display.DisplaySetup(false,"test menu",7,menu3); // Prepare main-UI display array and display the first line, mode is read only.
 	
 	/*
-		set the RTC with mon 9/7/2015 @ 16:15
+		set the RTC with starting point: mon 9/7/2015 @ 16:15
 	*/
 	
 	SysTm.Month =9;
@@ -1773,14 +1779,15 @@ void loop()
 				//Serial.print("DisplaySelection=|"); Serial.print(Display.DisplaySelection); Serial.println("|");
 				if (Display.DisplaySelection=="RTC")
 				{
-					Display.DisplaySetup(false,"SetRTC_ui",5,SetRTC_ui); // Prepare SetRTC_ui display array, display the first line, mode is read/write only.
+					boolean	rslt;
+					Display.DisplaySetup(false,"SetRTC_ui",5,SetRTC_ui); // Prepare SetRTC_ui display array, display the first line, mode is read/write.
 					
 					//RTC is read every second and sets strings for day of week, time, and date
 					//modify the display lines in the SetRTC_ui array
 
-					//Display.DisplayGetSetDate (&SysDateStr, "Date", true);	// replace the date string in display line named 'Date' in the SetRTC_up array
-					//Display.DisplayGetSetTime (&(SysTmStr.substring(0,4)), "Time", true);	// replace the time string in display line named 'Time'.  need to clip off sec
-					//Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// replace the day of week string in display line named 'DOW'
+					rslt = Display.DisplayGetSetDate (&SysDateStr, "Date", true);	// replace the date string in display line named 'Date' in the SetRTC_up array
+					rslt = Display.DisplayGetSetTime (&(SysTmStr.substring(0,5)), "Time", true);	// replace the time string in display line named 'Time'.  need to clip off sec
+					rslt = Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// replace the day of week string in display line named 'DOW'
 					
 				} 
 				else
@@ -1832,28 +1839,28 @@ void loop()
 					// will set the RTC and the soft interrupt will set the system time strings with the next read of RTC 
 
 
-					/*
+					
 					String tmpTime,tmpStr;
 					int	tmpVal;
-					Serial.print("SysDateStr=" ); Serial.print(SysDateStr); Serial.print(", sysTimeStr="); Serial.print(SysTmStr); Serial.print("' SysDOW="); Serial.println(sysDOWstr);
-					Serial.println("SysDateStr=" + SysDateStr + ", sysTimeStr=" + SysTmStr + "' SysDOW=" + sysDOWstr);
+					//Serial.print("SysDateStr=" ); Serial.print(SysDateStr); Serial.print(", sysTimeStr="); Serial.print(SysTmStr); Serial.print("' SysDOW="); Serial.println(sysDOWstr);
+					//Serial.println("SysDateStr=" + SysDateStr + ", sysTimeStr=" + SysTmStr + "' SysDOW=" + sysDOWstr);
 					Display.DisplayGetSetDate (&SysDateStr, "Date", false);					// read the date string from display line named 'Date' in the SetRTC_up array
 					tmpStr= SysDateStr.substring(0,1);		//get 2 digit date
-					Serial.println("month from RTC_ui="+tmpStr);
+					//Serial.println("month from RTC_ui="+tmpStr);
 					SysTm.Month = tmpStr.toInt();
 					tmpStr= SysDateStr.substring((3,4));	//get 2 digit day
 					Serial.println("day from RTC_ui="+tmpStr);
 					SysTm.Day = tmpStr.toInt();
 					tmpStr= SysDateStr.substring((6,9));	//get 4 digit yr
-					Serial.println("year from RTC_ui="+tmpStr);
-					SysTm.Day = tmpStr.toInt()-1970;		//year has offset from 1970		
+					//Serial.println("year from RTC_ui="+tmpStr);
+					SysTm.Year = tmpStr.toInt()-1970;		//year has offset from 1970		
 					
 					Display.DisplayGetSetTime (&SysTmStr, "Time", true);					// read the time string from display line named 'Time'. 
 					tmpStr= SysTmStr.substring(0,1);										// get	2 digit Hr
-					Serial.println("hrs from RTC_ui=" + tmpStr);
+					//Serial.println("hrs from RTC_ui=" + tmpStr);
 					SysTm.Hour=tmpStr.toInt();
 					tmpStr= SysTmStr.substring(3,4);										// get 2 digit min
-					Serial.println("min from RTC_ui" + tmpStr);
+					//Serial.println("min from RTC_ui" + tmpStr);
 					SysTm.Minute = tmpStr.toInt();
 					SysTm.Second = 0;														// no seconds in RTC_ui						
 					Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// read the day of week string from display line named 'DOW'
@@ -1863,14 +1870,14 @@ void loop()
 						if (DisplayDOW[tmpVal]==sysDOWstr) break;
 					}
 					tmpVal++;		// increment because Sunday=1 and index for sunday=0
-					Serial.print	("RTC_ui DOW index="); Serial.println(tmpVal);
+					//Serial.print	("RTC_ui DOW index="); Serial.println(tmpVal);
 					SysTm.Day=tmpVal;
 					
 					if (!RTC.write(SysTm))		//  write time to RTC, false if fails
 					{
 						ErrorLog("RTC write failed");
 					}
-					*/
+					
 				} 
 				else
 				{
