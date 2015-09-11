@@ -24,6 +24,7 @@ void GetKey(void* context);
 int ReadKey(void);
 void SysTimePoll(boolean start);
 void GetSysTime(void* context);
+uint16_t getFreeSram();
 //
 //
 

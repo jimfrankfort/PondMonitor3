@@ -43,11 +43,12 @@ String Main_UI[4]=
 	
 String SetRTC_ui[5]=
 	{"Text,text,---RTC Setup---,Used to view/update the date, time, and day of week settings",
-	"Date,m--d----yy--U-D,---RTC Date---,08/01/2015  U/D",
-	"Time,H--M---U-D,---RTC Time---,13:27  U/D",
+	"Date,m--d----yy--U-D,---RTC Date---,01/01/2015  U/D",
+	"Time,H--M---U-D,---RTC Time---,01:01  U/D",
 	"DOW,a-------U-D,--RTC DOW--,Mon     U/D",
 	"action,menu,---Action---,Update   Cancel"};	
 	
+/*
 String menu3[7]=
 	{"mnu1,menu,---Main Menu---,Make-Mnu-R/W   Make-Mnu-R/O",
 	"Date1,m--d----yy--U-D,---Date Entry1---,11/29/1955  U/D",
@@ -56,7 +57,7 @@ String menu3[7]=
 	"Alpha1,--CCCCCCC--U-D,---Label 1---,--abcdefg  U/D",
 	"DOW,-a---a---U-D,--Day of Week--,-Mon-Tue-U/D",
 	"Text1,text,---Message---,Now is the time for all good men to come to the aid of their country"};
-
+*/
 
 
 /* ---------------------------------------------- ErrorLog Routines --------------------------------------------------*/
@@ -843,7 +844,7 @@ void DisplayClass::ProcessDisplay(int KeyID)
 					{
 						case (UP_KEY):
 						{
-							Serial.println("month, upkey");							
+							//Serial.println("month, upkey");							
 							MonthEntry(true);
 							break;
 						}	// done with UP_KEY
@@ -851,7 +852,7 @@ void DisplayClass::ProcessDisplay(int KeyID)
 						case (DOWN_KEY):
 						{
 							MonthEntry(false);
-							Serial.println("month, downkey");								
+							//Serial.println("month, downkey");								
 							break;
 						}	// done with DOWN_KEY	
 					}
@@ -1269,21 +1270,21 @@ boolean DisplayClass::DisplayGetSetDate (String *DateStr, String MnuLineName, bo
 	// find and parse the display line
 	if (!FindAndParseDisplayLine(MnuLineName,&Index,&DisplayTitle,&TemplateLine,&DisplayLine))return false;	// problem parsing display line, likely a typo in call, return error	
 
-	Serial.println ("old entry=" + DisplayPntr[Index]);	//debug
+	//Serial.println ("old entry=" + DisplayPntr[Index]);	//debug
 	tmp1=TemplateLine.indexOf('m');	//find where in the template the first chr of month is.
 	if(tmp1==-1) return false;		//-1 means didn't find chr which is an unexpected error, probably a typo in template or referencing incorrect line in display array	
-	Serial.print ("index="); Serial.println(tmp1);	//debug
+	//Serial.print ("index="); Serial.println(tmp1);	//debug
 	if (set)
 	{
 		//user wants to set the date
 		//Serial.print("old displayline="); Serial.println(DisplayLine);	//debug
 		//Serial.println(Index);	//debug
 		DisplayLine=DisplayLine.substring(0,tmp1) + *DateStr + DisplayLine.substring(tmp1+LenOfDate,DisplayLine.length());	//splice new date into display line.  works because the chr position in the template matches the those in the display line
-		Serial.print("new displayline="); Serial.println(DisplayLine);	//debug	
+		//Serial.print("new displayline="); Serial.println(DisplayLine);	//debug	
 		
 		//change the entry	
 		DisplayPntr[Index]= MnuLineName +',' + TemplateLine +',' + DisplayTitle +',' + DisplayLine;	// change the entry in the display array
-		Serial.println ("new entry=" + DisplayPntr[Index]);	//debug
+		//Serial.println ("new entry=" + DisplayPntr[Index]);	//debug
 	} 
 	else
 	{
@@ -1312,8 +1313,8 @@ boolean DisplayClass::DisplayGetSetTime (String *TimeStr, String MnuLineName, bo
 	if (set)
 	{
 		//user wants to set the time
-		Serial.print("old displayline="); Serial.println(DisplayLine);	//debug
-		Serial.println(Index);	//debug
+		//Serial.print("old displayline="); Serial.println(DisplayLine);	//debug
+		//Serial.println(Index);	//debug
 		DisplayLine=DisplayLine.substring(0,tmp1) + *TimeStr + DisplayLine.substring(tmp1+LenOfTime,DisplayLine.length());	//splice new time into display line.  works because the chr position in the template matches the those in the display line
 		//change the entry	
 		DisplayPntr[Index]= MnuLineName +',' + TemplateLine +',' + DisplayTitle +',' + DisplayLine;	// change the entry in the display array
@@ -1322,7 +1323,7 @@ boolean DisplayClass::DisplayGetSetTime (String *TimeStr, String MnuLineName, bo
 	else
 	{
 		*TimeStr = DisplayLine.substring(tmp1,tmp1+LenOfTime);
-		Serial.println("time string='" + *TimeStr +"'");	//debug
+		//Serial.println("time string='" + *TimeStr +"'");	//debug
 		
 	}
 
@@ -1694,7 +1695,20 @@ void GetSysTime(void* context)
 }
 //------------------------------------------
 
+/* ---------------------------------------------- Memory Usage Routines ---------------------------------------*/
+extern unsigned int __bss_end;
+extern unsigned int __heap_start;
+extern void *__brkval;
 
+uint16_t getFreeSram() {
+	uint8_t newVariable;
+	// heap is empty, use bss as start memory address
+	if ((uint16_t)__brkval == 0)
+	return (((uint16_t)&newVariable) - ((uint16_t)&__bss_end));
+	// use heap end as the start of the memory address
+	else
+	return (((uint16_t)&newVariable) - ((uint16_t)__brkval));
+};
 
 //--------------------------------------------------------Set Up --------------------------------------------------
 
@@ -1730,21 +1744,7 @@ void setup()
 	{
 		ErrorLog("RTC write failed");
 	}
-		
-		Serial.print("In SetUp, Time = ");
-		Serial.print(SysTm.Hour);
-		Serial.write(':');
-		Serial.print(SysTm.Minute);
-		Serial.write(':');
-		Serial.print(SysTm.Second);
-		Serial.print(", Date (D/M/Y) = ");
-		Serial.print(SysTm.Day);
-		Serial.write('/');
-		Serial.print(SysTm.Month);
-		Serial.write('/');
-		Serial.print(tmYearToCalendar(SysTm.Year));
-		Serial.println();
-			
+				
 
 }
 
@@ -1837,46 +1837,57 @@ void loop()
 					Serial.println("RTC_ui-->action-->update");
 					//user wants to update system time with their changes made via display array 'RTC_ui'. Note that display 'RTC_ui' insures valid date, time, and DOW.  However, there is no check if DOW goes with date.
 					// will set the RTC and the soft interrupt will set the system time strings with the next read of RTC 
-
+					//Serial.print("Free Scram ="); Serial.println(getFreeSram());
 
 					
-					String tmpTime,tmpStr;
+					String TmpSysTimeStr, TmpSysDateStr,tmpTime,tmpStr;
 					int	tmpVal;
 					//Serial.print("SysDateStr=" ); Serial.print(SysDateStr); Serial.print(", sysTimeStr="); Serial.print(SysTmStr); Serial.print("' SysDOW="); Serial.println(sysDOWstr);
 					//Serial.println("SysDateStr=" + SysDateStr + ", sysTimeStr=" + SysTmStr + "' SysDOW=" + sysDOWstr);
-					Display.DisplayGetSetDate (&SysDateStr, "Date", false);					// read the date string from display line named 'Date' in the SetRTC_up array
-					tmpStr= SysDateStr.substring(0,1);		//get 2 digit date
+					Display.DisplayGetSetDate (&TmpSysDateStr, "Date", false);					// read the date string from display line named 'Date' in the SetRTC_up array
+					//Serial.println("new SysDateStr=" + TmpSysDateStr);
+					tmpStr= TmpSysDateStr.substring(0,2);		//get 2 digit month
 					//Serial.println("month from RTC_ui="+tmpStr);
 					SysTm.Month = tmpStr.toInt();
-					tmpStr= SysDateStr.substring((3,4));	//get 2 digit day
-					Serial.println("day from RTC_ui="+tmpStr);
+					//Serial.print("month int="); Serial.println(tmpVal);
+					tmpStr= TmpSysDateStr.substring(3,5);	//get 2 digit day
+					//Serial.println("day from RTC_ui="+tmpStr);
 					SysTm.Day = tmpStr.toInt();
-					tmpStr= SysDateStr.substring((6,9));	//get 4 digit yr
+					//Serial.print("Day int="); Serial.println(tmpStr.toInt());				
+					tmpStr= TmpSysDateStr.substring(6);	//get 4 digit yr
 					//Serial.println("year from RTC_ui="+tmpStr);
-					SysTm.Year = tmpStr.toInt()-1970;		//year has offset from 1970		
+					SysTm.Year = tmpStr.toInt()-1970;		//year has offset from 1970	
+					//Serial.print("year int="); Serial.println(SysTm.Year);	
+					//Serial.print("Free Scram after date ="); Serial.println(getFreeSram());
 					
-					Display.DisplayGetSetTime (&SysTmStr, "Time", true);					// read the time string from display line named 'Time'. 
-					tmpStr= SysTmStr.substring(0,1);										// get	2 digit Hr
+					Display.DisplayGetSetTime (&SysTmStr, "Time", false);					// read the time string from display line named 'Time'. 
+					//Serial.println("new time string=" +SysTmStr);
+					tmpStr= SysTmStr.substring(0,2);										// get	2 digit Hr
 					//Serial.println("hrs from RTC_ui=" + tmpStr);
 					SysTm.Hour=tmpStr.toInt();
-					tmpStr= SysTmStr.substring(3,4);										// get 2 digit min
-					//Serial.println("min from RTC_ui" + tmpStr);
+					tmpStr= SysTmStr.substring(3,5);										// get 2 digit min
+					//Serial.println("min from RTC_ui=" + tmpStr);
 					SysTm.Minute = tmpStr.toInt();
-					SysTm.Second = 0;														// no seconds in RTC_ui						
-					Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// read the day of week string from display line named 'DOW'
+					SysTm.Second = 0;
+					//Serial.print("Free Scram after time ="); Serial.println(getFreeSram());				
+																		// no seconds in RTC_ui						
+					Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",false);						// read the day of week string from display line named 'DOW'
 					
 					for (tmpVal=0; tmpVal<7; tmpVal++)
 					{
 						if (DisplayDOW[tmpVal]==sysDOWstr) break;
 					}
-					tmpVal++;		// increment because Sunday=1 and index for sunday=0
+					//tmpVal++;		// increment because Sunday=1 and index for sunday=0
 					//Serial.print	("RTC_ui DOW index="); Serial.println(tmpVal);
-					SysTm.Day=tmpVal;
+					SysTm.Wday=tmpVal;
+					//Serial.print("Free Scram after DOW ="); Serial.println(getFreeSram());
+					
 					
 					if (!RTC.write(SysTm))		//  write time to RTC, false if fails
 					{
 						ErrorLog("RTC write failed");
 					}
+					//Serial.print("Free Scram after set time ="); Serial.println(getFreeSram());
 					
 				} 
 				else
