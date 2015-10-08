@@ -5,23 +5,9 @@
 #include <Wire.h>
 #include <Time.h>		// time functions, used by Real Time Clock (RTC)
 #include <DS1307RTC.h>	// library for RTC module
+#include <avr/pgmspace.h>	// library for memory optimization using flash mem
 
-/* /#define Debug1	//macro to enable debug on/off.
-#ifdef Debug1
-#define DEBUG(x)  Serial.print (x)
-#define Serial.println(x) Serial.println(x)
-#else
-#define Serial.print(x)
-#define Serial.println(x)
-#endif
 
-//#define ErrorLog	//macro to enable error logging.  will change print form to real log in future
-#ifdef ErrorLog
-#define ErrorLog(x)  Serial.println (x)
-#else
-#define ErrorLog(x)
-#endif
-*/
 Timer Tmr;	// timer object used for polling at timed intervals
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);	// LCD display
 tmElements_t SysTm;		// system time
@@ -1794,13 +1780,13 @@ void loop()
 				{
 					if (Display.DisplaySelection=="Temp_sensor")
 					{
-						Serial.println("Main_UI-->SetUp-->Temp_sensor");	//debug
+						Serial.println( F("Main_UI-->SetUp-->Temp_sensor"));	//debug
 					} 
 					else
 					{
 						if (Display.DisplaySelection=="Flow_sensor")
 						{
-							Serial.println("Main_UI-->SetUp-->Flow_sensor");	//debug
+							Serial.println(F("Main_UI-->SetUp-->Flow_sensor"));	//debug
 						}
 						else
 						{
@@ -1829,15 +1815,15 @@ void loop()
 			//"DOW,-a---a---U-D,--RTC DOW--,-Mon-Tue-U/D",
 			//"action,menu,---Action---,Update   Cancel"}
 			
-			Serial.println(Display.DisplayLineName);
+			Serial.println (Display.DisplayLineName);
 			if (Display.DisplayLineName=="action")
 			{
 				if (Display.DisplaySelection=="Update")
 				{
-					Serial.println("RTC_ui-->action-->update");
+					Serial.println(F("RTC_ui-->action-->update"));
 					//user wants to update system time with their changes made via display array 'RTC_ui'. Note that display 'RTC_ui' insures valid date, time, and DOW.  However, there is no check if DOW goes with date.
 					// will set the RTC and the soft interrupt will set the system time strings with the next read of RTC 
-					//Serial.print("Free Scram ="); Serial.println(getFreeSram());
+					Serial.print(F("Free Scram =")); Serial.println(getFreeSram());
 
 					
 					String TmpSysTimeStr, TmpSysDateStr,tmpTime,tmpStr;
@@ -1894,7 +1880,7 @@ void loop()
 				{
 					if (Display.DisplaySelection=="Cancel")
 					{
-						Serial.println ("RTC_ui-->action-->Cancel");
+						Serial.println (F("RTC_ui-->action-->Cancel"));
 						Display.DisplaySetup(true,"Main_UI",4,Main_UI); // user want's to cancel, so return to main-UI display array and display the first line, mode is read only.
 					} 
 					else
