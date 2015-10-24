@@ -39,6 +39,15 @@ String TempSensor_ui[2]=
 	{"Text1,text,---Tmp Sensor---,Used to find, name, and test temp sensors",
 	"action,menu,---Action---,Discover  Name  Test  Cancel"};
 
+//buffer used to  load/save string arrays used for Display object.  This is max 80 chr X 6 lines
+String DisplayBuf[10]=
+	{"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
+	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
+	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
+	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
+	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
+	"01234567890123456789012345678901234567890123456789012345678901234567890123456789"};	
+
 	
 /*
 String menu3[7]=
@@ -1499,7 +1508,7 @@ void DisplayClass::CursorBlinkTimeInt(void)
 boolean DisplayClass::DisplayWriteSD (void)
 {													
 // writes the current display array to a file on the SD card.  Uses DisplayPntr, DisplayName, and DisplayLineCnt.  file is named DisplayName and is overwritten.  returns true if successful
-	if (WriteStringArraySD(DisplayName,DisplayLineCnt,DisplayPntr)) return true; else return false;	//uses method external to Display class because of issues of class containing other classes in arduino's "simplified C/C++"
+	if (WriteStringArraySD(DisplayName,DisplayLineCnt,DisplayPntr,false)) return true; else return false;	//uses method external to Display class because of issues of class containing other classes in arduino's "simplified C/C++"
 }
 //------------------------------------------
 void CursorBlinkIntRedirect(void* context)
@@ -1508,17 +1517,17 @@ void CursorBlinkIntRedirect(void* context)
 	Display.CursorBlinkTimeInt();
 }
 //------------------------------------------
-boolean WriteStringArraySD (String Dname, int Dlines, String *Darray)
+boolean WriteStringArraySD (String Dname, int Dlines, String *Darray, boolean WriteToReset)
 {
 	/* writes the the string array named Dname to a file on the SD card.  There are Dlines in the array and Darray points to the array.
 	file is named Dname and is in the root of the SD card.  Uses the built in Arduino SD and File classes.  A variable of type File named SDfile
 	is declared above and initialized in setup.
 	returns true if successful
 	*/ 
-	char filename[13];								//SD library uses char* not Sring objects.  max name is 8.3
+	char filename[19];								//SD library uses char* not Sring objects.  max name is 8.3
 	Dname=Dname.substring(0,8) + ".txt";
-									
-	Dname.toCharArray(filename, 12);				// room for 8.3 filename plus string terminating 0
+	if (WriteToReset) Dname = "Reset/"+Dname; else Dname="Save/"+Dname;		//choose where write, default=Save folder							
+	Dname.toCharArray(filename, 18);				// room for folder/8.3 filename plus string terminating 0
 	if (SD.exists(filename)) SD.remove(filename);			//delete existing file
 	SDfile = SD.open(filename, FILE_WRITE);			// create new file
 	
@@ -1537,7 +1546,7 @@ boolean WriteStringArraySD (String Dname, int Dlines, String *Darray)
 	else
 	{
 		// if the file didn't open, print an error:
-		Serial.println(F("error opening SDFile"));	//change to error log in future
+		Serial.print(F("error opening SDFile="));	Serial.println(filename);//change to error log in future
 		return false;
 	}
 }
@@ -1767,7 +1776,8 @@ void setup()
 	
 	//testing
 	Tst="Main_UI";
-	tstBool=WriteStringArraySD(Tst,4,Main_UI);
+	tstBool=WriteStringArraySD(Tst,4,Main_UI, true);
+	tstBool=WriteStringArraySD(Tst,4,Main_UI, false);
 	
 	KeyPoll(true);		// Begin polling the keypad 
 	SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm

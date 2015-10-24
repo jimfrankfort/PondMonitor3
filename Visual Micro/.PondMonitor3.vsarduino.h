@@ -18,7 +18,7 @@ extern "C" void __cxa_pure_virtual() {;}
 
 void ErrorLog (String error);
 void CursorBlinkIntRedirect(void* context);
-boolean WriteStringArraySD (String Dname, int Dlines, String *Darray);
+boolean WriteStringArraySD (String Dname, int Dlines, String *Darray, boolean WriteToReset);
 void KeyPoll(boolean start);
 void CheckKey(void* context);
 void GetKey(void* context);
