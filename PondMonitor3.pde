@@ -3,11 +3,12 @@
 #include <Timer.h>
 #include <LiquidCrystal.h>
 #include <Wire.h>
-#include <Time.h>		// time functions, used by Real Time Clock (RTC)
-#include <DS1307RTC.h>	// library for RTC module
+#include <Time.h>			// time functions, used by Real Time Clock (RTC)
+#include <DS1307RTC.h>		// library for RTC module
 #include <avr/pgmspace.h>	// library for memory optimization using flash mem
+#include <SD.h>				// library for SD card
 
-
+File SDfile;			// file object for accessing SD card
 Timer Tmr;	// timer object used for polling at timed intervals
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);	// LCD display
 tmElements_t SysTm;		// system time
@@ -33,6 +34,11 @@ String SetRTC_ui[5]=
 	"Time,H--M---U-D,---RTC Time---,01:01  U/D",
 	"DOW,a-------U-D,--RTC DOW--,Mon     U/D",
 	"action,menu,---Action---,Update   Cancel"};	
+	
+String TempSensor_ui[2]=
+	{"Text1,text,---Tmp Sensor---,Used to find, name, and test temp sensors",
+	"action,menu,---Action---,Discover  Name  Test  Cancel"};
+
 	
 /*
 String menu3[7]=
@@ -203,6 +209,8 @@ class DisplayClass
 	boolean DisplayGetSetNum (String *NumStr, String MnuLineName, boolean set);		// gets or sets a numeric value in the display line named MnuLineName in the current display array. If Set is true then sets value of DayStr else gets value
 	boolean DisplayGetSetChrs (String *ChrStr, String MnuLineName, boolean set);	// gets or sets a character string in the display line named MnuLineName in the current display array. If Set is true then sets value of ChrStr else gets value
 	boolean DisplaySetTxt (String *TxtStr, String MnuLineName);						// sets a text message in the display line named MnuLineName in the current display array. Get not needed as this is only for outputting messages
+	boolean DisplayWriteSD (void);													// writes the current display array to a file on the SD card.  Uses DisplayPntr, DisplayName, and DisplayLineCnt.  file is named DisplayName and is overwritten.  returns true if successful
+
 } Display;
 
 //-------------------------------------------
@@ -1488,12 +1496,51 @@ void DisplayClass::CursorBlinkTimeInt(void)
 	}
 }
 //------------------------------------------
+boolean DisplayClass::DisplayWriteSD (void)
+{													
+// writes the current display array to a file on the SD card.  Uses DisplayPntr, DisplayName, and DisplayLineCnt.  file is named DisplayName and is overwritten.  returns true if successful
+	if (WriteStringArraySD(DisplayName,DisplayLineCnt,DisplayPntr)) return true; else return false;	//uses method external to Display class because of issues of class containing other classes in arduino's "simplified C/C++"
+}
+//------------------------------------------
 void CursorBlinkIntRedirect(void* context)
 {
 	// this routine exists outside of the Display class because we can't use some timer.every method within a class in the .pde implementation.  Compiler cannot resolve which routine to call.
 	Display.CursorBlinkTimeInt();
 }
 //------------------------------------------
+boolean WriteStringArraySD (String Dname, int Dlines, String *Darray)
+{
+	/* writes the the string array named Dname to a file on the SD card.  There are Dlines in the array and Darray points to the array.
+	file is named Dname and is in the root of the SD card.  Uses the built in Arduino SD and File classes.  A variable of type File named SDfile
+	is declared above and initialized in setup.
+	returns true if successful
+	*/ 
+	char filename[13];								//SD library uses char* not Sring objects.  max name is 8.3
+	Dname=Dname.substring(0,8) + ".txt";
+									
+	Dname.toCharArray(filename, 12);				// room for 8.3 filename plus string terminating 0
+	if (SD.exists(filename)) SD.remove(filename);			//delete existing file
+	SDfile = SD.open(filename, FILE_WRITE);			// create new file
+	
+	// if the file opened okay, write to it:
+	if (SDfile)
+	{
+		for (byte x=0; x<Dlines; x++)
+		{
+			Serial.println(*(Darray+x));
+			SDfile.println(*(Darray+x));	//	write to end of file
+		}
+		
+		SDfile.close();		//close the file
+		return true;
+	}
+	else
+	{
+		// if the file didn't open, print an error:
+		Serial.println(F("error opening SDFile"));	//change to error log in future
+		return false;
+	}
+}
 
 
 /* ----------------------------------------------LS_key routines---------------------------------------------------*/
@@ -1705,7 +1752,19 @@ void setup()
 	boolean tstBool;
 	int tmp1=0,tmp2=0,tmp3 =0;
 	String str1="string one",str2="string two",str3="string three";
-  
+	
+	//initialize the SD library	
+	pinMode(53, OUTPUT);	//pin 53 = CS 
+	
+	if (!SD.begin(53)) 
+	{
+		Serial.println(F("initialization failed!"));	// change to log in future
+	}
+	else
+	{
+		Serial.println(F("initialization done."));	//change to log in future
+	}
+	
 	KeyPoll(true);		// Begin polling the keypad 
 	SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm
 
