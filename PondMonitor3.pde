@@ -1765,6 +1765,10 @@ void setup()
 		Serial.println(F("initialization done."));	//change to log in future
 	}
 	
+	//testing
+	Tst="Main_UI";
+	tstBool=WriteStringArraySD(Tst,4,Main_UI);
+	
 	KeyPoll(true);		// Begin polling the keypad 
 	SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm
 
