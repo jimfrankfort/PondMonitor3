@@ -1508,7 +1508,7 @@ void DisplayClass::CursorBlinkTimeInt(void)
 boolean DisplayClass::DisplayWriteSD (void)
 {													
 // writes the current display array to a file on the SD card.  Uses DisplayPntr, DisplayName, and DisplayLineCnt.  file is named DisplayName and is overwritten.  returns true if successful
-	if (WriteStringArraySD(DisplayName,DisplayLineCnt,DisplayPntr,false)) return true; else return false;	//uses method external to Display class because of issues of class containing other classes in arduino's "simplified C/C++"
+	if (WriteStringArraySD(DisplayName,DisplayLineCnt,DisplayPntr)) return true; else return false;	//uses method external to Display class because of issues of class containing other classes in arduino's "simplified C/C++"
 }
 //------------------------------------------
 void CursorBlinkIntRedirect(void* context)
@@ -1517,16 +1517,15 @@ void CursorBlinkIntRedirect(void* context)
 	Display.CursorBlinkTimeInt();
 }
 //------------------------------------------
-boolean WriteStringArraySD (String Dname, int Dlines, String *Darray, boolean WriteToReset)
+boolean WriteStringArraySD (String Dname, int Dlines, String *Darray)
 {
 	/* writes the the string array named Dname to a file on the SD card.  There are Dlines in the array and Darray points to the array.
-	file is named Dname and is in the root of the SD card.  Uses the built in Arduino SD and File classes.  A variable of type File named SDfile
+	file is named Dname and is in the folder /Save in the root of the SD card.  Uses the built in Arduino SD and File classes.  A variable of type File named SDfile
 	is declared above and initialized in setup.
 	returns true if successful
 	*/ 
 	char filename[19];								//SD library uses char* not Sring objects.  max name is 8.3
-	Dname=Dname.substring(0,8) + ".txt";
-	if (WriteToReset) Dname = "Reset/"+Dname; else Dname="Save/"+Dname;		//choose where write, default=Save folder							
+	Dname="Save/" + Dname.substring(0,8) + ".txt";					
 	Dname.toCharArray(filename, 18);				// room for folder/8.3 filename plus string terminating 0
 	if (SD.exists(filename)) SD.remove(filename);			//delete existing file
 	SDfile = SD.open(filename, FILE_WRITE);			// create new file
@@ -1548,6 +1547,53 @@ boolean WriteStringArraySD (String Dname, int Dlines, String *Darray, boolean Wr
 		// if the file didn't open, print an error:
 		Serial.print(F("error opening SDFile="));	Serial.println(filename);//change to error log in future
 		return false;
+	}
+}
+byte ReadStringArraySD (String Dname, byte Dlines)
+{
+	/* Reads Dlines of the string array named Dname from a file on the SD card and loads it into the variable named DisplayBuf. 
+	The file is named Dname is located in the Save/ folder in the root of the SD care.  Uses the built in Arduino SD and File classes.  A variable of type File named SDfile
+	is declared above and initialized in setup.
+	Returns the number of lines read if successful else 0.
+	*/ 
+	char filename[19];								//SD library uses char* not Sring objects.  max name is 8.3
+	Dname="Save/" + Dname.substring(0,8) + ".txt";			
+	Dname.toCharArray(filename, 18);				// room for folder/8.3 filename plus string terminating 0
+	if ((SD.exists(filename)) && (SDfile = SD.open(filename, FILE_READ)))
+	{
+		// file exists and opened ok
+		byte x;
+		for (x=0; x<Dlines; x++)
+		{
+			String LineBuf;				// buffer for line being read
+			char C;						// holds character read from file
+			for (byte y=0; y<80; y++)	//max of 80 characters per line
+			{
+				C=SDfile.read();
+				if (isPrintable(C))
+				{
+					LineBuf = LineBuf + C;	// add the character to the buffer
+				} 
+				else
+				{
+					//C is either null (end of line) or -1 (nothing else to read)
+					break;
+				}
+				
+			}
+			DisplayBuf[x] = LineBuf;
+			Serial.println(DisplayBuf[x]);
+			Serial.println(x);
+		}		
+		SDfile.close();		//close the file
+		return x;			// return the number of lines read
+
+	}
+	else
+	{
+		// file didn't exist or didn't open
+		Serial.print(F("error in ReadStringArraySD, did not find file or could not open it. SDFile="));	Serial.println(filename);//change to error log in future
+		return 0;
 	}
 }
 
@@ -1776,8 +1822,11 @@ void setup()
 	
 	//testing
 	Tst="Main_UI";
-	tstBool=WriteStringArraySD(Tst,4,Main_UI, true);
-	tstBool=WriteStringArraySD(Tst,4,Main_UI, false);
+	//tstBool=WriteStringArraySD(Tst,4,Main_UI, true);
+	tstBool=WriteStringArraySD(Tst,4,Main_UI);
+	Serial.println(F("calling ReadStringArray"));
+	tmp1=ReadStringArraySD(Tst,4);
+	Serial.print(F("returned from ReadStringArraySD=")); Serial.println(tmp1);
 	
 	KeyPoll(true);		// Begin polling the keypad 
 	SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm
