@@ -40,7 +40,7 @@ String TempSensor_ui[2]=
 	"action,menu,---Action---,Discover  Name  Test  Cancel"};
 
 //buffer used to  load/save string arrays used for Display object.  This is max 80 chr X 6 lines
-String DisplayBuf[10]=
+String DisplayBuf[6]=
 	{"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
@@ -1565,25 +1565,21 @@ byte ReadStringArraySD (String Dname, byte Dlines)
 		byte x;
 		for (x=0; x<Dlines; x++)
 		{
-			String LineBuf;				// buffer for line being read
-			char C;						// holds character read from file
+ 			char C;						// holds character read from file
+			int tmp	;					// for int value of C
+			
+			DisplayBuf[x]="";			// initialize display line
 			for (byte y=0; y<80; y++)	//max of 80 characters per line
 			{
 				C=SDfile.read();
-				if (isPrintable(C))
+				tmp=C;					//convert character into int
+				if (tmp != 13)			//if not a carriage return = end of line
 				{
-					LineBuf = LineBuf + C;	// add the character to the buffer
+					DisplayBuf[x]=DisplayBuf[x] + C;	//add the char to the buffer////
 				} 
-				else
-				{
-					//C is either null (end of line) or -1 (nothing else to read)
-					break;
-				}
-				
+				else break;				//read next line after CR
 			}
-			DisplayBuf[x] = LineBuf;
-			Serial.println(DisplayBuf[x]);
-			Serial.println(x);
+			Serial.println(DisplayBuf[x]);	//debug
 		}		
 		SDfile.close();		//close the file
 		return x;			// return the number of lines read
