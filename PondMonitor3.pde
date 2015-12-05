@@ -22,6 +22,7 @@ int SysTmPoleContext;	// ID of timer used to poll system time
 //int ledEvent;
 //------------------------ String arrays used by the Display class to support the user interface------------------------------
 
+/* these variables replaced by routines that read from SD card into reusable DisplayBuf
 String Main_UI[4]=
 	{"SetUp,menu,---Set Up---,RTC   Temp_sensor  Flow_sensor",
 	"Row_2,menu,---2nd Display---,run2   set_time2   sensor_tst2   calibrate2",
@@ -38,8 +39,10 @@ String SetRTC_ui[5]=
 String TempSensor_ui[2]=
 	{"Text1,text,---Tmp Sensor---,Used to find, name, and test temp sensors",
 	"action,menu,---Action---,Discover  Name  Test  Cancel"};
+*/
 
 //buffer used to  load/save string arrays used for Display object.  This is max 80 chr X 6 lines
+#define DisplayBufLen 80	// max len of strings in DisplayBuf
 String DisplayBuf[6]=
 	{"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
@@ -209,7 +212,7 @@ class DisplayClass
 	boolean DisplayUserMadeSelection;	// used to poll if Display result is ready to be read.  If true, result can be read by DisplayGetResult()
 	
 	void DisplayStartStop (boolean action);	//Used to indicate that the Display is in use and that keypresses should be processed by the Display routines
-	void DisplaySetup(boolean isReadOnly, String mnuName, int mnuLines, String *mnu); //sets up the Display.  needs to be passed the name, number of lines, and pointer to an array of strings (formatted as DisplayLines)
+	void DisplaySetup(boolean isReadOnly, boolean readFromSD, String mnuName, int mnuLines, String *mnu); //sets up the Display.  needs to be passed the name, number of lines, and pointer to an array of strings (formatted as DisplayLines)
 	void ProcessDisplay(int KeyID); //Main processing routine for Display.  This is called after user has pressed a key (up, dn, rt, lt, or Select) that has been debounced by the LS_Key routines
 	void CursorBlinkTimeInt(void);	// soft interrupt routine to make 'cursor' blink 
 	boolean DisplayGetSetDate (String *DateStr, String MnuLineName, boolean set);	// gets or sets date in the display line named MnuLineName in the current display array.  date format is mm/dd/yyyy.  if Set is true then sets value of DateStr else gets value
@@ -248,6 +251,7 @@ DisplayClass::DisplayClass(void)
 {
 	//constructor
 	DisplayPos=0;
+	DisplayLine="01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890012345678901234567890012345678901234567890";	//reserve 140 chr length
 
 };
 //------------------------------------------
@@ -519,7 +523,7 @@ void DisplayClass::DisplayLineSetup(String Mline)
 		an option to 'continue', after which the routine hands off to the program logic.  There are public routines that allow logic to set or read the data entered
 		by the user.
 	*/
-	
+	//Serial.print(F("DisplayLineSetup SCRAM="));Serial.println(getFreeSram()); //debug
 	int tmp1,tmp2,tmp3;
 	String TemplateChar;							// used to process the TemplateLine
 	tmp1= Mline.indexOf(',');						// get position of comma, used to parse
@@ -600,11 +604,14 @@ void DisplayClass::DisplayStartStop (boolean action)
 		
 }
 //------------------------------------------
-void DisplayClass::DisplaySetup(boolean isReadOnly, String mnuName, int mnuLines, String *mnu)
+void DisplayClass::DisplaySetup(boolean isReadOnly, boolean readFromSD, String mnuName, int mnuLines, String *mnu)
 {
 	/*  Starts the Display array passed in by reference. 
 		Display is an array of DisplayLines. We pass in the name of the array and the number of displayLines (starting with 1).
-		IsReadOnly determines if DisplayLines are read only or read/write....which applies only to data entry DisplayLines
+		IsReadOnly determines if DisplayLines are read only or read/write....which applies only to data entry DisplayLines.
+		If readFromSD is true, the routine will read the display string from a file of same name into the DisplayBuff. This does two things:
+			1) is how we read back variables that were set and saved in display arrays in prior runs
+			2) saves SRAM because DisplayBuf us reused for each display array
 			
 		This routine initializes some Display specific variables (pointer to array, name of display array, max number of lines, and index
 		After that, it calls a routine to put the first DisplayLine on the physical display.  Subsequent processing occurs when user interacts with the keys (Rt, Lt, Up, Dn, and Select). 
@@ -612,7 +619,24 @@ void DisplayClass::DisplaySetup(boolean isReadOnly, String mnuName, int mnuLines
 		which will handle all interaction with the user.  The main loop needs to poll to see if the user has made a selection via checking if DisplayUserMadeSelection==true, and if so, reads
 		the results from the Display variables....Display name, row name, and user selection.  These are then used to direct logic in the main loop of the program.
 		*/
-	DisplayPntr = mnu;			// variable to hold a pointer to the String array that is the display
+	if (readFromSD)
+	{
+		//read the mnuName into DisplayBuf from SD card.
+		DisplayPntr= DisplayBuf;	// variable to hold a pointer to where we will load the string array that is the display
+		if (ReadStringArraySD(mnuName, mnuLines) != mnuLines)	//read menuName from /Save folder of the SD card into DisplayBuf.  If successfull, then will read all the lines else error.
+		{
+			//if here then there was an error reading the file.
+			Serial.println(F("Error reading menu in DisplayClass::DisplaySetup"));	//replace with errorlog
+		}
+		//Serial.print(F("UsingDisplayPntr")); 
+		//for (int z=0; z<mnuLines; z++) {Serial.println(DisplayPntr[z]);	}	//debug
+		
+	} 
+	else
+	{
+		DisplayPntr = mnu;			// using in memory display array.  this variable to hold a pointer to the String array that is the display
+	}
+	
 	DisplayName = mnuName;		// name of the Display array, returned when user makes a selection
 	DisplayIndex = 0;			// initialize index to DisplayLine within String array that is the Display
 	if (mnuLines==1) DisplayLineCnt=1; else DisplayLineCnt = mnuLines-1; // max number of DisplayLines in the Display, starting with 1
@@ -786,6 +810,7 @@ void DisplayClass::ProcessDisplay(int KeyID)
 						{
 							DisplayIndex++;	//Increment DisplayIndex
 							DisplayLineSetup(*(DisplayPntr+DisplayIndex)); // extract and display DisplayLine[DisplayLineCnt]
+							Serial.println("KeyDown"); Serial.println(DisplayBuf[DisplayIndex]);	//debug
 						}
 						break;
 					}	// done with DOWN_KEY
@@ -1569,17 +1594,17 @@ byte ReadStringArraySD (String Dname, byte Dlines)
 			int tmp	;					// for int value of C
 			
 			DisplayBuf[x]="";			// initialize display line
-			for (byte y=0; y<80; y++)	//max of 80 characters per line
+			for (byte y=0; y<200; y++)	//max of DisplayBufLen characters per line. we must read the entire line, but only put a max of DisplayBufLen chr's into the buffer line
 			{
 				C=SDfile.read();
 				tmp=C;					//convert character into int
 				if (tmp != 13)			//if not a carriage return = end of line
 				{
-					DisplayBuf[x]=DisplayBuf[x] + C;	//add the char to the buffer////
+					if ((y<DisplayBufLen) && (tmp >= 32) && (tmp<= 126) )DisplayBuf[x]=DisplayBuf[x] + C;	//add the char to the buffer if there is room & if it is printable
 				} 
-				else break;				//read next line after CR
+				else break;				//read next line after 
 			}
-			Serial.println(DisplayBuf[x]);	//debug
+			//Serial.println(DisplayBuf[x]);	//debug
 		}		
 		SDfile.close();		//close the file
 		return x;			// return the number of lines read
@@ -1809,28 +1834,32 @@ void setup()
 	
 	if (!SD.begin(53)) 
 	{
-		Serial.println(F("initialization failed!"));	// change to log in future
+		Serial.println(F("SD initialization failed!"));	// change to log in future
 	}
 	else
 	{
-		Serial.println(F("initialization done."));	//change to log in future
+		Serial.println(F("SD initialized ok."));	//change to log in future
 	}
 	
-	//testing
-	Tst="Main_UI";
-	//tstBool=WriteStringArraySD(Tst,4,Main_UI, true);
-	tstBool=WriteStringArraySD(Tst,4,Main_UI);
+	/*testing
+	Tst="SetRTC_ui";
+	tstBool=WriteStringArraySD(Tst,5,SetRTC_ui);
 	Serial.println(F("calling ReadStringArray"));
-	tmp1=ReadStringArraySD(Tst,4);
+	tmp1=ReadStringArraySD(Tst,5);
 	Serial.print(F("returned from ReadStringArraySD=")); Serial.println(tmp1);
+	Tst="TempSensor_ui";
+	tstBool=WriteStringArraySD(Tst,2,TempSensor_ui);
+	Serial.println(F("calling ReadStringArray"));
+	tmp1=ReadStringArraySD(Tst,2);
+	Serial.print(F("returned from ReadStringArraySD=")); Serial.println(tmp1);	
+	*/
 	
-	KeyPoll(true);		// Begin polling the keypad 
+	
+	KeyPoll(true);		// Begin polling the keypad S
 	SysTimePoll(true);	// begin to poll the Real Time Clock to get system time into SysTm
 
 	Display.DisplayStartStop(true);		// indicate that menu processing will occur. Tells main loop to pass key presses to the Menu
-	//Menu.MenuSetup(1,"Menu1",5,menu1); // Prepare Menu1 and display the first MenuLine, array has 5 lines (starting at 1).  Mode of processing is a set of options.
-	Display.DisplaySetup(true,"Main_UI",4,Main_UI); // Prepare main-UI display array and display the first line, mode is read only.
-	//Display.DisplaySetup(false,"test menu",7,menu3); // Prepare main-UI display array and display the first line, mode is read only.
+	Display.DisplaySetup(true,true, "Main_UI",4,DisplayBuf); // Prepare main-UI display array and display the first line, mode is read only.
 	
 	/*
 		set the RTC with starting point: mon 9/7/2015 @ 16:15
@@ -1844,9 +1873,13 @@ void setup()
 	SysTm.Second=27;
 	SysTm.Wday=2;
 	
-	if (!RTC.write(SysTm))		//  write time to RTC, false if fails
+	if (RTC.write(SysTm))		//  write time to RTC, false if fails
 	{
-		ErrorLog("RTC write failed");
+		Serial.println(F("RTC initialized OK to mon 9/7/2015 @ 16:15 "));
+	}
+	else
+	{
+		ErrorLog("RTC initialization in SetUp failed");
 	}
 				
 
@@ -1884,7 +1917,7 @@ void loop()
 				if (Display.DisplaySelection=="RTC")
 				{
 					boolean	rslt;
-					Display.DisplaySetup(false,"SetRTC_ui",5,SetRTC_ui); // Prepare SetRTC_ui display array, display the first line, mode is read/write.
+					Display.DisplaySetup(false,true, "SetRTC_ui",5,DisplayBuf); // Prepare SetRTC_ui display array, display the first line, mode is read/write, retrieve SetRTC_ui from the SD card
 					
 					//RTC is read every second and sets strings for day of week, time, and date
 					//modify the display lines in the SetRTC_ui array
@@ -1892,7 +1925,7 @@ void loop()
 					rslt = Display.DisplayGetSetDate (&SysDateStr, "Date", true);	// replace the date string in display line named 'Date' in the SetRTC_up array
 					rslt = Display.DisplayGetSetTime (&(SysTmStr.substring(0,5)), "Time", true);	// replace the time string in display line named 'Time'.  need to clip off sec
 					rslt = Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// replace the day of week string in display line named 'DOW'
-					
+					//Serial.println(F("main loop, clicked RCT")); for (int z=0; z<5; z++) {Serial.println(DisplayBuf[z]);}	//debug
 				} 
 				else
 				{
@@ -1999,11 +2032,12 @@ void loop()
 					if (Display.DisplaySelection=="Cancel")
 					{
 						Serial.println (F("RTC_ui-->action-->Cancel"));
-						Display.DisplaySetup(true,"Main_UI",4,Main_UI); // user want's to cancel, so return to main-UI display array and display the first line, mode is read only.
+						Display.DisplaySetup(true,true, "Main_UI",4,DisplayBuf); // user wants to cancel, so return to main-UI display array and display the first line, mode is read only.
 					} 
 					else
 					{
 						ErrorLog("error processing setRTC_ui-->action: unrecognized DisplaySelection");
+						Serial.print(F("error processing setRTC_ui-->action: unrecognized DisplaySelection=")); Serial.println(Display.DisplaySelection);	//debug
 					}
 					
 				}
@@ -2012,8 +2046,11 @@ void loop()
 			else
 			{
 				ErrorLog("error processing RTC_ui: unrecognized DisplayLineName");
+				Serial.print(F("error processing setRTC_ui-->action: unrecognized DisplayLineName=")); Serial.println(Display.DisplayLineName);	//debug
+				Serial.print((F("length="))); Serial.println(Display.DisplayLineName.length());
+
 			}
-			Display.DisplaySetup(true,"Main_UI",4,Main_UI); // Return to main-UI display array and display the first line
+			Display.DisplaySetup(true, true, "Main_UI",4,DisplayBuf); // Return to main-UI display array and display the first line
 			goto EndDisplayProcessing; //exit processing Display	
 		}
 		
