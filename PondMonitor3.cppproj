@@ -76,6 +76,8 @@
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility</Value>
@@ -119,6 +121,8 @@
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility</Value>
@@ -136,7 +140,7 @@
   <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
 </AvrGccCpp>
     </ToolchainSettings>
-    <VMSETTING_IncludePaths>C:/Program Files (x86)/Arduino/hardware/arduino/cores/arduino;C:/Program Files (x86)/Arduino/hardware/arduino/variants/mega;../../PondMonitor3;C:/Program Files (x86)/Arduino/libraries;C:/Program Files (x86)/Arduino/hardware/arduino/libraries;C:/Program Files (x86)/Visual Micro/Visual Micro for Arduino/Micro Platforms/default/debuggers;C:/Users/Jim Frankfort/Documents/Arduino/libraries;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/arduino/hardware/tools/avr/avr/;c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer/utility;C:/Program Files (x86)/Arduino/libraries/Wire;C:/Program Files (x86)/Arduino/libraries/Wire/utility;</VMSETTING_IncludePaths>
+    <VMSETTING_IncludePaths>C:/Program Files (x86)/Arduino/hardware/arduino/cores/arduino;C:/Program Files (x86)/Arduino/hardware/arduino/variants/mega;../../PondMonitor3;C:/Program Files (x86)/Arduino/libraries;C:/Program Files (x86)/Arduino/hardware/arduino/libraries;C:/Program Files (x86)/Visual Micro/Visual Micro for Arduino/Micro Platforms/default/debuggers;C:/Users/Jim Frankfort/Documents/Arduino/libraries;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/arduino/hardware/tools/avr/avr/;c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer/utility;C:/Program Files (x86)/Arduino/libraries/Wire;C:/Program Files (x86)/Arduino/libraries/Wire/utility;C:/Program Files (x86)/Arduino/libraries/SD;C:/Program Files (x86)/Arduino/libraries/SD/utility;</VMSETTING_IncludePaths>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
@@ -175,6 +179,8 @@
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility</Value>
@@ -218,6 +224,8 @@
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/libraries/SD</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility</Value>
       <Value>C:/Program Files (x86)/Arduino/libraries/LiquidCrystal</Value>
       <Value>C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility</Value>
@@ -235,7 +243,7 @@
   <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
 </AvrGccCpp>
     </ToolchainSettings>
-    <VMSETTING_IncludePaths>C:/Program Files (x86)/Arduino/hardware/arduino/cores/arduino;C:/Program Files (x86)/Arduino/hardware/arduino/variants/mega;../../PondMonitor3;C:/Program Files (x86)/Arduino/libraries;C:/Program Files (x86)/Arduino/hardware/arduino/libraries;C:/Program Files (x86)/Visual Micro/Visual Micro for Arduino/Micro Platforms/default/debuggers;C:/Users/Jim Frankfort/Documents/Arduino/libraries;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/arduino/hardware/tools/avr/avr/;c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer/utility;C:/Program Files (x86)/Arduino/libraries/Wire;C:/Program Files (x86)/Arduino/libraries/Wire/utility;</VMSETTING_IncludePaths>
+    <VMSETTING_IncludePaths>C:/Program Files (x86)/Arduino/hardware/arduino/cores/arduino;C:/Program Files (x86)/Arduino/hardware/arduino/variants/mega;../../PondMonitor3;C:/Program Files (x86)/Arduino/libraries;C:/Program Files (x86)/Arduino/hardware/arduino/libraries;C:/Program Files (x86)/Visual Micro/Visual Micro for Arduino/Micro Platforms/default/debuggers;C:/Users/Jim Frankfort/Documents/Arduino/libraries;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/;c:/program files (x86)/arduino/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/arduino/hardware/tools/avr/avr/;c:/program files (x86)/arduino/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT;C:/Users/Jim Frankfort/Documents/Arduino/libraries/DS1307RCT/utility;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal;C:/Program Files (x86)/Arduino/libraries/LiquidCrystal/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Time/utility;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer;C:/Users/Jim Frankfort/Documents/Arduino/libraries/Timer/utility;C:/Program Files (x86)/Arduino/libraries/Wire;C:/Program Files (x86)/Arduino/libraries/Wire/utility;C:/Program Files (x86)/Arduino/libraries/SD;C:/Program Files (x86)/Arduino/libraries/SD/utility;</VMSETTING_IncludePaths>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Visual Micro\" />
