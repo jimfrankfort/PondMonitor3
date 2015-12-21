@@ -44,6 +44,7 @@ String TempSensor_ui[2]=
 //buffer used to  load/save string arrays used for Display object.  This is max 80 chr X 6 lines
 #define DisplayBufLen 100	// max len of strings in DisplayBuf
 String DisplayBuf[6];		// buffer used to work with DisplayArrays. Read/written from SD card by Display object
+//merge test
 /*String DisplayBuf[6]=
 	{"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	"01234567890123456789012345678901234567890123456789012345678901234567890123456789",
