@@ -1332,7 +1332,7 @@ boolean DisplayClass::DisplayGetSetTime (String *TimeStr, String MnuLineName, bo
 	// gets or sets time in the display line named MnuLineName in the current display array.  time format is HH:MM.  if Set is true then sets value of DateStr else gets value
 	int Index = 0;
 	int	tmp1;
-	String DisplayTitle, TemplateLine, DisplayLine;							// used to process the TemplateLine
+	String DisplayTitle, TemplateLine, DisplayLine,tmpStr;							// used to process the TemplateLine
 	#define LenOfTime 5	// length of the HH:MM
 	
 	// find and parse the display line
@@ -1345,7 +1345,8 @@ boolean DisplayClass::DisplayGetSetTime (String *TimeStr, String MnuLineName, bo
 		//user wants to set the time
 		//Serial.print("old displayline="); Serial.println(DisplayLine);	//debug
 		//Serial.println(Index);	//debug
-		DisplayLine=DisplayLine.substring(0,tmp1) + *TimeStr + DisplayLine.substring(tmp1+LenOfTime,DisplayLine.length());	//splice new time into display line.  works because the chr position in the template matches the those in the display line
+		tmpStr=TimeStr->substring(0,LenOfTime);	// clip time to 5 chrs
+		DisplayLine=DisplayLine.substring(0,tmp1) + tmpStr + DisplayLine.substring(tmp1+LenOfTime,DisplayLine.length());	//splice new time into display line.  works because the chr position in the template matches the those in the display line
 		//change the entry	
 		DisplayPntr[Index]= MnuLineName +',' + TemplateLine +',' + DisplayTitle +',' + DisplayLine;	// change the entry in the display array
 		//Serial.println ("new entry=" + DisplayPntr[Index]);	//debug
@@ -1925,8 +1926,8 @@ void loop()
 					//modify the display lines in the SetRTC_ui array
 
 					rslt = Display.DisplayGetSetDate (&SysDateStr, "Date", true);	// replace the date string in display line named 'Date' in the SetRTC_up array
-					rslt = Display.DisplayGetSetTime (&(SysTmStr.substring(0,5)), "Time", true);	// replace the time string in display line named 'Time'.  need to clip off sec
-					rslt = Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);						// replace the day of week string in display line named 'DOW'
+					rslt = Display.DisplayGetSetTime (&SysTmStr, "Time", true);		// replace the time string in display line named 'Time'.  need to clip off sec
+					rslt = Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);		// replace the day of week string in display line named 'DOW'
 					//Serial.println(F("main loop, clicked RCT")); for (int z=0; z<5; z++) {Serial.println(DisplayBuf[z]);}	//debug
 				} 
 				else
