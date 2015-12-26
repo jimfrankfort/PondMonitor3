@@ -179,9 +179,9 @@ class DisplayClass
 	String BlinkLine;	// string used by soft interrupt to make simulate a blinking cursor
 	String BlinkCursor;	// character used for cursor.  if read only= O else =*
 	String TemplateLine;	// string used to determine how to process the display line. e.g. Display, text, time, date, numeric input
-	int DisplayStartPos,DisplayEndPos, DisplayPos;	//starting, ending, and current position indices of the DisplayLine being processed.  Used for scrolling in small displays
+	unsigned int DisplayStartPos,DisplayEndPos, DisplayPos;	//starting, ending, and current position indices of the DisplayLine being processed.  Used for scrolling in small displays
 	unsigned int DisplayOptStart, DisplayOptEnd ;			// starting and ending position of a selection in the DisplayLine.  Used for returning the string of the Display option selected
-	int MaxLinePos;		// max line position to use for printing to LCD.  Takes 16 chr into account.  Used for Substring
+	unsigned int MaxLinePos;		// max line position to use for printing to LCD.  Takes 16 chr into account.  Used for Substring
 
 	int DisplayAdvPastSpace (String Mline, int Start);
 	int DisplayAdvToSpace (String Mline, int Start);
@@ -261,7 +261,7 @@ int DisplayClass::DisplayAdvPastSpace (String Mline, int Start)
 {
 	//starting  at a space in a string, return the position of the next non-space chr
 	//Serial.print("in DisplayAdvPastSpace, values passed in: Mline=|"); Serial.print(Mline); Serial.print("|, start="); Serial.println(Start);
-	int x= Start;
+	unsigned int x= Start;
 	while (Mline[x]==' ' && x < Mline.length()+1)
 	{
 		x++;	//advance until encounter a character other than space
@@ -1114,7 +1114,7 @@ void DisplayClass::ProcessDisplay(int KeyID)
 			
 			case 3:	//display line is of type text.  this supports showing long strings of text that can be rapidly scrolled through.
 			{
-				int oldPos=DisplayPos;		// holds prior position of DisplayPos
+				//int oldPos=DisplayPos;		// holds prior position of DisplayPos *Unused*
 				String newline;			// string to display
 				
 				switch (LS_curKey)
@@ -1398,7 +1398,7 @@ boolean DisplayClass::DisplayGetSetNum (String *NumStr, String MnuLineName, bool
 {
 	// gets or sets a numeric value in the display line named MnuLineName in the current display array. If Set is true then sets value of DayStr else gets value
 	int Index = 0;
-	int	tmp1,tmp2, LenOfNum;
+	int	tmp1,tmp2;
 	String DisplayTitle, TemplateLine, DisplayLine;							// used to process the TemplateLine
 		
 	// find and parse the display line
@@ -1431,7 +1431,7 @@ boolean DisplayClass::DisplayGetSetChrs (String *ChrStr, String MnuLineName, boo
 {
 	// gets or sets a character string in the display line named MnuLineName in the current display array. If Set is true then sets value of ChrStr else gets value
 	int Index = 0;
-	int	tmp1,tmp2, LenOfChr;
+	int	tmp1,tmp2;
 	String DisplayTitle, TemplateLine, DisplayLine, NewChrStr;							// used to process the TemplateLine
 	
 	// find and parse the display line
@@ -1465,7 +1465,7 @@ boolean DisplayClass::DisplaySetTxt (String *TxtStr, String MnuLineName)
 {
 	// sets a text message in the display line named MnuLineName in the current display array. Get not needed as this is only for outputting messages
 	int Index = 0;
-	int	tmp1,tmp2, LenOfChr;
+	//int	tmp1,tmp2;
 	String DisplayTitle, TemplateLine, DisplayLine;							// used to process the TemplateLine
 	
 	// find and parse the display line
@@ -1747,7 +1747,6 @@ void GetSysTime(void* context)
 	{
 		// set up string of system time in 24 hr format
 		String tmpTime,strSnip;
-		int	tmVal;
 		strSnip= String(SysTm.Hour);	// hr to String
 		//Serial.print("hour="); Serial.print(strSnip);
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//hr needs to be 2 chr
@@ -1929,6 +1928,7 @@ void loop()
 					rslt = Display.DisplayGetSetTime (&SysTmStr, "Time", true);		// replace the time string in display line named 'Time'.  need to clip off sec
 					rslt = Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);		// replace the day of week string in display line named 'DOW'
 					//Serial.println(F("main loop, clicked RCT")); for (int z=0; z<5; z++) {Serial.println(DisplayBuf[z]);}	//debug
+
 				} 
 				else
 				{
