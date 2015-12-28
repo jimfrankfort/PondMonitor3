@@ -179,9 +179,9 @@ class DisplayClass
 	String BlinkLine;	// string used by soft interrupt to make simulate a blinking cursor
 	String BlinkCursor;	// character used for cursor.  if read only= O else =*
 	String TemplateLine;	// string used to determine how to process the display line. e.g. Display, text, time, date, numeric input
-	int DisplayStartPos,DisplayEndPos, DisplayPos;	//starting, ending, and current position indices of the DisplayLine being processed.  Used for scrolling in small displays
+	unsigned int DisplayStartPos,DisplayEndPos, DisplayPos;	//starting, ending, and current position indices of the DisplayLine being processed.  Used for scrolling in small displays
 	unsigned int DisplayOptStart, DisplayOptEnd ;			// starting and ending position of a selection in the DisplayLine.  Used for returning the string of the Display option selected
-	int MaxLinePos;		// max line position to use for printing to LCD.  Takes 16 chr into account.  Used for Substring
+	unsigned int MaxLinePos;		// max line position to use for printing to LCD.  Takes 16 chr into account.  Used for Substring
 
 	int DisplayAdvPastSpace (String Mline, int Start);
 	int DisplayAdvToSpace (String Mline, int Start);
@@ -190,7 +190,6 @@ class DisplayClass
 	void DisplayLineSetup(String Mline); //takes the input string and parses it into parameters and the Displayline. The format for the input string is: DisplayLineName,Title,DisplayLine
 	void CursorBlink(boolean action);
 
-	
 	//Methods for incrementing/decrementing characters for data entry
 	void MonthEntry(boolean increment);	//increments or decrements 2 digit month at DisplayPos in DisplayLine
 	void DayEntry(boolean increment);	// increments or decrements 2 digit day at DisplayPos in DisplayLine
@@ -224,15 +223,31 @@ class DisplayClass
 	boolean DisplayGetSetChrs (String *ChrStr, String MnuLineName, boolean set);	// gets or sets a character string in the display line named MnuLineName in the current display array. If Set is true then sets value of ChrStr else gets value
 	boolean DisplaySetTxt (String *TxtStr, String MnuLineName);						// sets a text message in the display line named MnuLineName in the current display array. Get not needed as this is only for outputting messages
 	boolean DisplayWriteSD (void);													// writes the current display array to a file on the SD card.  Uses DisplayPntr, DisplayName, and DisplayLineCnt.  file is named DisplayName and is overwritten.  returns true if successful
+	
+	//Methods for optimizing SCRAM by using program memory to store const strings. Actual const char * are declaired below outside of the class because I couldn't get them to work here.
+	String ProgMemLU(const char* LUwhich, unsigned int LUwhere, unsigned int LUlen);	// uses PROGMEM library to retrieve substrings of char arrays stored in program memory for RAM conservation
 
 } Display;
 
 //-------------------------------------------
-	//preset the strings used for data entry using the methods in the Display class.  Defined here instead of in the class because I couldn't figure out how to pre-set this in the constructor.
-	String DisplayMonth[12]= {"01","02","03","04","05","06","07","08","09","10","11","12"};	//month will advance 2 chr at a time
-	String DisplayDay[31]= {"01","02","03","04","05","06","07","08","09","10",
+	//preset the strings used for data entry using the methods in the Display class.  
+	//Defined here instead of in the class because I couldn't figure out how to get it to work within the variables declared for the class.
+	//Note, these are stored in program memory to conserve space using DisplayClass::ProgMemLU and the PROGMEM ligrary.
+
+	const char	DisplayDay[] PROGMEM =	{"01020304050607080910111213141516171819202122232425262728293031"};	// day will advance 2 chr at a time
+	const char DisplayMonth[] PROGMEM = {"010203040506070809101112"};	// month will advance 2 chr at a time
+	const char DisplayYear[] PROGMEM =	{"0123456789"};	// year will advance 1 chr at a time
+	const char DisplayHour[] PROGMEM =	{"000102030405060708091011121314151617181920212223"};	//hour will advance 2 chr at a time
+	const char DisplayMin [] PROGMEM =	{"00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960"};	// Min will advance 2 chr at a time
+	const char DisplayNum [] PROGMEM =	{"0123456789"};	// numbers advance 1 chr at a time
+	const char DisplayChar[] PROGMEM =	{"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_$%&"};	//alpha numeric characters will advance 1 at a time
+	const char	DisplayDOW[] PROGMEM=	{"MonTueWedThuFriSatSun"};
+
+
+	/*String DisplayDay[31]= {"01","02","03","04","05","06","07","08","09","10",
 							"11","12","13","14","15","16","17","18","19","20",
 							"21","22","23","24","25","26","27","28","29","30","31"};	// day will advance 2 chr at a time
+						
 	String DisplayYear[10]= {"0","1","2","3","4","5","6","7","8","9"};	//year will advance 1 chr at a time
 	String DisplayHour[24]= {"00","01","02","03","04","05","06","07","08","09","10",
 							"11","12","13","14","15","16","17","18","19","20","21","22","23"};	// hour will advance 2 chr at a time
@@ -248,6 +263,7 @@ class DisplayClass
 							"0","1","2","3","4","5","6","7","8","9","-","_"};
 	String DisplayDOW[7]=	{"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};	//days of the week start on sunday and are 3 chr's each
 	
+	*/
 //-------------------------------------------------Display Class routines----------------------------------------------
 DisplayClass::DisplayClass(void)
 {
@@ -261,7 +277,7 @@ int DisplayClass::DisplayAdvPastSpace (String Mline, int Start)
 {
 	//starting  at a space in a string, return the position of the next non-space chr
 	//Serial.print("in DisplayAdvPastSpace, values passed in: Mline=|"); Serial.print(Mline); Serial.print("|, start="); Serial.println(Start);
-	int x= Start;
+	unsigned int x= Start;
 	while (Mline[x]==' ' && x < Mline.length()+1)
 	{
 		x++;	//advance until encounter a character other than space
@@ -309,54 +325,77 @@ int DisplayClass::DisplayBkupToSpace (String Mline, int Start)
 	return x;	// return the index of the space chr.
 }
 //------------------------------------------
+String DisplayClass::ProgMemLU(const char* LUwhich, unsigned int LUwhere, unsigned int LUlen)
+{
+	/*
+	ProgMem library has functions to store const char arrays in program memory space for later retrieval, thus saving SCRAM.  
+	This routine returns a portion of the chr array stored in program memory that is needed by the calling routine. 
+	LUWhich points to the char array in program memory. The char array holds substrings that are of equal length LUlen, 
+	and LUwhere serves as an index to the substring to return, (first substring is 0).
+	*/
+	
+	String	substr;					//holds the substring that will be returned.  Static so it will persist after exiting this routine
+	char	ChrFromString;			//holds the character returned from the string stored in Program memory
+	if (LUwhere < 0 ){ LUwhere=0;}	// prevents reading outside the string in the event that the calling parameters are in error
+	unsigned int start=LUwhere * LUlen;		//starting location to read string
+	if (start > strlen_P(LUwhich)-LUlen){ start=0;}	// prevents reading outside of the string in the event that the calling parameters are in error
+	
+	for (unsigned int x= start; x<start+LUlen; x++)
+	{
+		ChrFromString= pgm_read_byte_near (LUwhich+x);
+		substr+= ChrFromString;
+	}
+	return substr;
+}
+//------------------------------------------
 void DisplayClass::MonthEntry(boolean increment)
 {
 	// DisplayPos is pointing to first digit of 2 digit month.  Increment or decrement month using strings in display month
-	int pntr;
+	int idx;
 	String tmpStr, MonthStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+2);
 	Serial.println(tmpStr);
-	pntr= tmpStr.toInt()-1;	//month # -1 = index # due to index starting with 0
-	Serial.println(pntr);
+	idx= tmpStr.toInt()-1;	//month # -1 = index # due to index starting with 0
+	Serial.println(idx);
 	
 	if(increment)
 	{
-		if(pntr <11) {pntr++;} else {pntr=0;}
+		if(idx <11) {idx++;} else {idx=0;}
 	}
 	else
 	{			
-		if(pntr > 0) {pntr--;} else {pntr=11;}
+		if(idx > 0) {idx--;} else {idx=11;}
 	}
 	
-	MonthStr= DisplayMonth[pntr];
-	Serial.println(MonthStr);Serial.print("displayPos="); Serial.println(DisplayPos);
-	Serial.print("0-DisplayPos=|"); Serial.print(DisplayLine.substring(0,DisplayPos)); Serial.print("| displayPos+2-->len=|"); Serial.print( DisplayLine.substring (DisplayPos+2,DisplayLine.length()));Serial.println("|");
+	MonthStr= ProgMemLU(DisplayMonth,idx,2);	//retrieve the 2 character portion (MM) of DisplayMonth indexed by idx
+	//Serial.println(MonthStr);Serial.print("displayPos="); Serial.println(DisplayPos);
+	//Serial.print("0-DisplayPos=|"); Serial.print(DisplayLine.substring(0,DisplayPos)); Serial.print("| displayPos+2-->len=|"); Serial.print( DisplayLine.substring (DisplayPos+2,DisplayLine.length()));Serial.println("|");
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  MonthStr + DisplayLine.substring (DisplayPos+2,DisplayLine.length());
 	//replace the month 
-	Serial.print("|"); Serial.print(DisplayLine); Serial.println("|");	//debug
-	Serial.print("|"); Serial.print(tmpStr); Serial.println("|");//debug
+	//Serial.print("|"); Serial.print(DisplayLine); Serial.println("|");	//debug
+	//Serial.print("|"); Serial.print(tmpStr); Serial.println("|");//debug
 	DisplayLine=tmpStr;	
-	Serial.print("|"); Serial.print(DisplayLine); Serial.println("|");	//debug
+	//Serial.print("|"); Serial.print(DisplayLine); Serial.println("|");	//debug
 }
 //------------------------------------------
 void DisplayClass::DayEntry(boolean increment)
 {
 	// DisplayPos is pointing to first digit of 2 digit day.  Increment or decrement day using strings in display month
-	int pntr;
+	int idx;
 	String tmpStr, DayStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+2);
-	pntr= tmpStr.toInt()-1;	//day # -1 = index # due to index starting with 0
+	idx= tmpStr.toInt()-1;	//day # -1 = index # due to index starting with 0
 	
 	if(increment)
 	{
-		if(pntr <30) {pntr++;} else {pntr=0;}
+		if(idx <30) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=30;}
+		if(idx > 0) {idx--;} else {idx=30;}
 	}
 	
-	DayStr= DisplayDay[pntr];
+	DayStr= ProgMemLU(DisplayDay,idx,2);	//retrieve the 2 character portion (dd) of DisplayDay indexed by idx
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  DayStr + DisplayLine.substring (DisplayPos+2,DisplayLine.length());	//replace the month
 	//Serial.print("|"); Serial.print(DisplayLine); Serial.println("|");	//debug
 	//Serial.print("|"); Serial.print(tmpStr); Serial.println("|");//debug
@@ -366,21 +405,21 @@ void DisplayClass::DayEntry(boolean increment)
 void DisplayClass::YearEntry(boolean increment)
 {
 	// DisplayPos is pointing to a digit in the last 2 digits of the year. Increment or decrement year using strings in display month
-	int pntr;
+	int idx;
 	String tmpStr, YrStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+1);
-	pntr= tmpStr.toInt();	
+	idx= tmpStr.toInt();	
 	
 	if(increment)
 	{
-		if(pntr <9) {pntr++;} else {pntr=0;}
+		if(idx <9) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=9;}
+		if(idx > 0) {idx--;} else {idx=9;}
 	}
 	
-	YrStr= DisplayYear[pntr];
+	YrStr= ProgMemLU(DisplayYear,idx,1);
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  YrStr + DisplayLine.substring (DisplayPos+1,DisplayLine.length());	//replace the month
 	//Serial.print("|"); Serial.print(DisplayLine); Serial.println("|");	//debug
 	//Serial.print("|"); Serial.print(tmpStr); Serial.println("|");//debug
@@ -390,22 +429,22 @@ void DisplayClass::YearEntry(boolean increment)
 void DisplayClass::DowEntry(boolean increment)
 { 
 	// increments or decrements days of the week
-	int pntr=0;
+	int idx=0;
 	String tmpStr, ChrStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+3);
 	
-	while((tmpStr != DisplayDOW[pntr]) && (pntr<6)) pntr++; //scan the string array for the day of the week under DisplayPos
+	while((tmpStr != ProgMemLU(DisplayDOW,idx,3)) && (idx<6)) idx++; //scan the string array for the day of the week under DisplayPos
 	
 	if(increment)
 	{
-		if(pntr <6) {pntr++;} else {pntr=0;}
+		if(idx <6) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=6;}
+		if(idx > 0) {idx--;} else {idx=6;}
 	}
 	
-	ChrStr= DisplayDOW[pntr];
+	ChrStr= ProgMemLU(DisplayDOW,idx,3);
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  ChrStr + DisplayLine.substring (DisplayPos+3,DisplayLine.length());	//replace the DOW
 	DisplayLine=tmpStr;
 }
@@ -413,21 +452,21 @@ void DisplayClass::DowEntry(boolean increment)
 void DisplayClass::HourEntry(boolean increment)
 {	
 	// increments or decrements hours, 2 digits at a time
-	int pntr;
+	int idx;
 	String tmpStr, HrStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+2);
-	pntr= tmpStr.toInt();	//
+	idx= tmpStr.toInt();	//
 	
 	if(increment)
 	{
-		if(pntr <23) {pntr++;} else {pntr=0;}
+		if(idx <23) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=23;}
+		if(idx > 0) {idx--;} else {idx=23;}
 	}
 	
-	HrStr= DisplayHour[pntr];
+	HrStr= ProgMemLU(DisplayHour,idx,2);
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  HrStr + DisplayLine.substring (DisplayPos+2,DisplayLine.length());	//replace the hours
 	DisplayLine=tmpStr;
 }
@@ -435,21 +474,21 @@ void DisplayClass::HourEntry(boolean increment)
 void DisplayClass::MinuteEntry(boolean increment)
 {	
 	// increments or decrements Minutes, 2 digits at a time
-	int pntr;
+	int idx;
 	String tmpStr, MinStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+2);
-	pntr= tmpStr.toInt();	//
+	idx= tmpStr.toInt();	//
 	
 	if(increment)
 	{
-		if(pntr <59) {pntr++;} else {pntr=0;}
+		if(idx <59) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=59;}
+		if(idx > 0) {idx--;} else {idx=59;}
 	}
 	
-	MinStr= DisplayMin[pntr];
+	MinStr= ProgMemLU(DisplayMin,idx,2);
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  MinStr + DisplayLine.substring (DisplayPos+2,DisplayLine.length());	//replace the hours
 	DisplayLine=tmpStr;
 }
@@ -457,21 +496,21 @@ void DisplayClass::MinuteEntry(boolean increment)
 void DisplayClass::NumEntry(boolean increment)
 {	
 	// increments or decrements numbers, 1 digit at a time
-	int pntr;
+	int idx;
 	String tmpStr, NumStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+1);
-	pntr= tmpStr.toInt();	
+	idx= tmpStr.toInt();	
 	
 	if(increment)
 	{
-		if(pntr <9) {pntr++;} else {pntr=0;}
+		if(idx <9) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=9;}
+		if(idx > 0) {idx--;} else {idx=9;}
 	}
 	
-	NumStr= DisplayNum[pntr];
+	NumStr= ProgMemLU(DisplayNum,idx,1);
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  NumStr + DisplayLine.substring (DisplayPos+1,DisplayLine.length());	//replace the Minutes
 	DisplayLine=tmpStr;	
 	
@@ -480,22 +519,29 @@ void DisplayClass::NumEntry(boolean increment)
 void DisplayClass::ChrEntry(boolean increment)
 { 
 	// increments or decrements alphanumerics
-	int pntr=0;
+	int idx=0;
 	String tmpStr, ChrStr;
 	tmpStr= DisplayLine.substring(DisplayPos,DisplayPos+1);
 	
-	while((tmpStr != DisplayChar[pntr]) && (pntr<64)) pntr++; //scan the string array for the chr under DisplayPos
-		
+	while((tmpStr != ProgMemLU(DisplayChar,idx,1)) && (idx<64)) idx++; //scan the string array for the day of the week under DisplayPos
+	//scan the string array for the chr under DisplayPos
+	/*for (idx=0, idx<64, idx++)		
+	{
+		tmpStr1= ProgMemLU(DisplayChar,idx,1);
+		if (tmpStr1==tmpStr) {break;}		//exit when we find it 
+	}
+	*/	
 	if(increment)
 	{
-		if(pntr <63) {pntr++;} else {pntr=0;}
+		if(idx <63) {idx++;} else {idx=0;}
 	}
 	else
 	{
-		if(pntr > 0) {pntr--;} else {pntr=63;}
+		if(idx > 0) {idx--;} else {idx=63;}
 	}
+
 	
-	ChrStr= DisplayChar[pntr];
+	ChrStr= ProgMemLU(DisplayChar,idx,1);
 	tmpStr= DisplayLine.substring(0,DisplayPos) +  ChrStr + DisplayLine.substring (DisplayPos+1,DisplayLine.length());	//replace the Minutes
 	DisplayLine=tmpStr;	
 }
@@ -1114,7 +1160,7 @@ void DisplayClass::ProcessDisplay(int KeyID)
 			
 			case 3:	//display line is of type text.  this supports showing long strings of text that can be rapidly scrolled through.
 			{
-				int oldPos=DisplayPos;		// holds prior position of DisplayPos
+				//int oldPos=DisplayPos;		// holds prior position of DisplayPos *Unused*
 				String newline;			// string to display
 				
 				switch (LS_curKey)
@@ -1398,7 +1444,7 @@ boolean DisplayClass::DisplayGetSetNum (String *NumStr, String MnuLineName, bool
 {
 	// gets or sets a numeric value in the display line named MnuLineName in the current display array. If Set is true then sets value of DayStr else gets value
 	int Index = 0;
-	int	tmp1,tmp2, LenOfNum;
+	int	tmp1,tmp2;
 	String DisplayTitle, TemplateLine, DisplayLine;							// used to process the TemplateLine
 		
 	// find and parse the display line
@@ -1431,7 +1477,7 @@ boolean DisplayClass::DisplayGetSetChrs (String *ChrStr, String MnuLineName, boo
 {
 	// gets or sets a character string in the display line named MnuLineName in the current display array. If Set is true then sets value of ChrStr else gets value
 	int Index = 0;
-	int	tmp1,tmp2, LenOfChr;
+	int	tmp1,tmp2;
 	String DisplayTitle, TemplateLine, DisplayLine, NewChrStr;							// used to process the TemplateLine
 	
 	// find and parse the display line
@@ -1465,7 +1511,7 @@ boolean DisplayClass::DisplaySetTxt (String *TxtStr, String MnuLineName)
 {
 	// sets a text message in the display line named MnuLineName in the current display array. Get not needed as this is only for outputting messages
 	int Index = 0;
-	int	tmp1,tmp2, LenOfChr;
+	//int	tmp1,tmp2;
 	String DisplayTitle, TemplateLine, DisplayLine;							// used to process the TemplateLine
 	
 	// find and parse the display line
@@ -1577,6 +1623,7 @@ boolean WriteStringArraySD (String Dname, int Dlines, String *Darray)
 		return false;
 	}
 }
+//------------------------------------------
 byte ReadStringArraySD (String Dname, byte Dlines)
 {
 	/* Reads Dlines of the string array named Dname from a file on the SD card and loads it into the variable named DisplayBuf. 
@@ -1747,7 +1794,6 @@ void GetSysTime(void* context)
 	{
 		// set up string of system time in 24 hr format
 		String tmpTime,strSnip;
-		int	tmVal;
 		strSnip= String(SysTm.Hour);	// hr to String
 		//Serial.print("hour="); Serial.print(strSnip);
 		if (strSnip.length()==1) strSnip = '0' + strSnip;	//hr needs to be 2 chr
@@ -1774,7 +1820,7 @@ void GetSysTime(void* context)
 		SysDateStr = SysDateStr + tmYearToCalendar(SysTm.Year);	// complete SysDateStr as mm/dd/yyyy
 		//Serial.print(" year="); Serial.println(SysTm.Year);	
 		
-		sysDOWstr = DisplayDOW[SysTm.Wday];	//set day of week string. SysTm.Wday is int where 1=sunday
+		sysDOWstr =  Display.ProgMemLU(DisplayDOW,SysTm.Wday,3); // DisplayDOW[SysTm.Wday];	//set day of week string. SysTm.Wday is int where 1=sunday
 		//Serial.println ("SysTmStr=" + SysTmStr + ", SysDateStr=" + SysDateStr + ", SysDOW=" + sysDOWstr);
 		/*
 		Serial.print("Ok, Time = ");
@@ -1929,6 +1975,7 @@ void loop()
 					rslt = Display.DisplayGetSetTime (&SysTmStr, "Time", true);		// replace the time string in display line named 'Time'.  need to clip off sec
 					rslt = Display.DisplayGetSetDOW  (&sysDOWstr, "DOW",true);		// replace the day of week string in display line named 'DOW'
 					//Serial.println(F("main loop, clicked RCT")); for (int z=0; z<5; z++) {Serial.println(DisplayBuf[z]);}	//debug
+
 				} 
 				else
 				{
@@ -2015,7 +2062,8 @@ void loop()
 					
 					for (tmpVal=0; tmpVal<7; tmpVal++)
 					{
-						if (DisplayDOW[tmpVal]==sysDOWstr) break;
+						tmpStr= Display.ProgMemLU(DisplayDOW, tmpVal, 3);	//get the DOW string from storage
+						if (tmpStr==sysDOWstr) break;
 					}
 					//tmpVal++;		// increment because Sunday=1 and index for sunday=0
 					//Serial.print	("RTC_ui DOW index="); Serial.println(tmpVal);
